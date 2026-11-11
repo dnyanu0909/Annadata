@@ -1,0 +1,20 @@
+# Python & Virtualenv
+.venv/
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Data & Large Files
+data/
+*.zip
+*.tar.gz
+
+# Checkpoints & Models
+*.h5
+*.keras
+models/annadata_production.onnx
+
+# Artifacts & Test outputs
+test_leaf.jpg
+tests/temp_test_leaf.jpg
+.pytest_cache/
