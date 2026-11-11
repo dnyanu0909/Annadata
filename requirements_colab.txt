@@ -1,0 +1,11 @@
+﻿# Colab-specific requirements — TensorFlow is pre-installed, only install extras
+tf-keras>=2.16.0
+tf2onnx>=1.16.1
+onnx<=1.16.2
+onnxruntime>=1.17.1
+scikit-learn>=1.4.0
+opencv-python-headless
+numpy>=1.26.0,<2.0.0
+kaggle
+tqdm
+pillow
