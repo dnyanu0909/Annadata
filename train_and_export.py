@@ -270,8 +270,10 @@ def run_training(args):
         callbacks=[checkpoint]
     )
     
+   
     # Phase 2: Fine-Tuning
     print(f"\n🔓 Phase 2: Unfreezing Top 30 Layers ({args.epochs_finetune} epochs, LR=3e-5)...")
+
     base_model.trainable = True
 
     for layer in base_model.layers[:-30]:
@@ -280,28 +282,52 @@ def run_training(args):
     for layer in base_model.layers:
         if isinstance(layer, layers.BatchNormalization):
             layer.trainable = False
-        
+
     model.compile(
         optimizer=keras.optimizers.Adam(learning_rate=3e-5),
         loss="categorical_crossentropy",
         metrics=["accuracy"]
     )
-    
+
     callbacks = [
-        keras.callbacks.EarlyStopping(monitor="val_loss", patience=3, restore_best_weights=True),
-        keras.callbacks.ReduceLROnPlateau(monitor="val_loss", factor=0.2, patience=2, min_lr=1e-7)
+        keras.callbacks.ModelCheckpoint(
+            MODELS_DIR / "best_finetuned_model.keras",
+            monitor="val_loss",
+            save_best_only=True,
+            verbose=1
+        ),
+        keras.callbacks.EarlyStopping(
+            monitor="val_loss",
+            patience=3,
+            restore_best_weights=True
+        ),
+        keras.callbacks.ReduceLROnPlateau(
+            monitor="val_loss",
+            factor=0.2,
+            patience=2,
+            min_lr=1e-7
+        )
     ]
-    
+
     model.fit(
         train_ds,
         validation_data=val_ds,
         epochs=args.epochs_finetune,
         callbacks=callbacks
     )
-    
-    # Direct In-Memory ONNX Export
+
+    # Load the best fine-tuned checkpoint
+    model = keras.models.load_model(
+        MODELS_DIR / "best_finetuned_model.keras"
+    )
+
+    # Export the same checkpoint to ONNX
     onnx_path = MODELS_DIR / "annadata_production.onnx"
     export_to_onnx(model, onnx_path)
+
+    # Save final production model
+    model.save(MODELS_DIR / "annadata_production.keras")
+
 
 def main():
     parser = argparse.ArgumentParser(description="Annadata Production Training & ONNX Export")
