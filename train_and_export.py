@@ -102,29 +102,40 @@ def save_atomic_class_map(class_names: list[str], output_path: Path) -> dict:
     return class_map
 
 def build_model(num_classes: int) -> tuple[Model, Model]:
-    """Construct EfficientNetB0 architecture with embedded rescaling."""
-    print("🧠 Constructing EfficientNetB0 architecture with embedded Rescaling(1./255)...")
-    inputs = layers.Input(shape=(IMG_SIZE, IMG_SIZE, 3), name="input_image")
-    
-    # In-graph normalization: accepts raw [0-255] float32 pixels, normalizes to [0, 1]
-    x = layers.Rescaling(1.0 / 255.0, name="embedded_rescaling")(inputs)
-    
+    print("Constructing EfficientNetB0...")
+
+    inputs = layers.Input(
+        shape=(IMG_SIZE, IMG_SIZE, 3),
+        name="input_image"
+    )
+
     base_model = EfficientNetB0(
         include_top=False,
         weights="imagenet",
-        input_tensor=x
+        input_tensor=inputs
     )
-    base_model.trainable = False  # Freeze for initial warmup
-    
+
+    base_model.trainable = False
+
     x = layers.GlobalAveragePooling2D(name="gap")(base_model.output)
     x = layers.BatchNormalization(name="bn_head")(x)
     x = layers.Dropout(0.30, name="dropout_1")(x)
     x = layers.Dense(512, activation="relu", name="dense_512")(x)
     x = layers.BatchNormalization(name="bn_dense")(x)
     x = layers.Dropout(0.15, name="dropout_2")(x)
-    outputs = layers.Dense(num_classes, activation="softmax", name="predictions")(x)
-    
-    full_model = Model(inputs=inputs, outputs=outputs, name="annadata_production")
+
+    outputs = layers.Dense(
+        num_classes,
+        activation="softmax",
+        name="predictions"
+    )(x)
+
+    full_model = Model(
+        inputs=inputs,
+        outputs=outputs,
+        name="annadata_production"
+    )
+
     return full_model, base_model
 
 def export_to_onnx(model: Model, output_path: Path):
