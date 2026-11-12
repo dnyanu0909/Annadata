@@ -232,8 +232,8 @@ def run_training(args):
     
     # Optimize data pipeline
     AUTOTUNE = tf.data.AUTOTUNE
-    train_ds = train_ds.cache().prefetch(buffer_size=AUTOTUNE)
-    val_ds = val_ds.cache().prefetch(buffer_size=AUTOTUNE)
+    train_ds = train_ds.prefetch(buffer_size=tf.data.AUTOTUNE)
+    val_ds = val_ds.prefetch(buffer_size=tf.data.AUTOTUNE)
     
     # Build Model
     model, base_model = build_model(num_classes)
@@ -245,17 +245,30 @@ def run_training(args):
         loss="categorical_crossentropy",
         metrics=["accuracy"]
     )
+    checkpoint = keras.callbacks.ModelCheckpoint(
+        "models/best_model.keras",
+        monitor="val_loss",
+        save_best_only=True,
+        verbose=1
+    )
+
     model.fit(
         train_ds,
         validation_data=val_ds,
-        epochs=args.epochs_warmup
+        epochs=args.epochs_warmup,
+        callbacks=[checkpoint]
     )
     
     # Phase 2: Fine-Tuning
     print(f"\n🔓 Phase 2: Unfreezing Top 30 Layers ({args.epochs_finetune} epochs, LR=3e-5)...")
     base_model.trainable = True
+
     for layer in base_model.layers[:-30]:
         layer.trainable = False
+
+    for layer in base_model.layers:
+        if isinstance(layer, layers.BatchNormalization):
+            layer.trainable = False
         
     model.compile(
         optimizer=keras.optimizers.Adam(learning_rate=3e-5),
