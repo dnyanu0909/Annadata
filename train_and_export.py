@@ -291,11 +291,11 @@ def run_training(args):
 
     callbacks = [
         keras.callbacks.ModelCheckpoint(
-            MODELS_DIR / "best_finetuned_model.keras",
+            str(MODELS_DIR / "best_finetuned_model.keras"),
             monitor="val_loss",
             save_best_only=True,
             verbose=1
-        ),
+),
         keras.callbacks.EarlyStopping(
             monitor="val_loss",
             patience=3,
@@ -318,7 +318,7 @@ def run_training(args):
 
     # Load the best fine-tuned checkpoint
     model = keras.models.load_model(
-        MODELS_DIR / "best_finetuned_model.keras"
+        str(MODELS_DIR / "best_finetuned_model.keras")
     )
 
     # Export the same checkpoint to ONNX
