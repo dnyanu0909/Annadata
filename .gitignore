@@ -18,3 +18,4 @@ models/annadata_production.onnx
 test_leaf.jpg
 tests/temp_test_leaf.jpg
 .pytest_cache/
+neurocodes_ml.ipynb
